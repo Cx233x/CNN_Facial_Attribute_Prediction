@@ -73,7 +73,7 @@ Data sources: [UTKFace project page](https://susanqq.github.io/UTKFace/) · [Pro
 ## Repository Layout
 
 ```text
-CNN_Facial_Attribute_Prediction/
+facial-attribute-prediction-cnn/
 ├── README.md
 ├── requirements.txt
 ├── .gitignore
@@ -101,7 +101,7 @@ The notebooks also expect a **local `data/` directory**, which is not committed 
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/Cx233x/CNN_Facial_Attribute_Prediction.git
+git clone https://github.com/Cx233x/facial-attribute-prediction-cnn.git
 cd CNN_Facial_Attribute_Prediction
 ```
 

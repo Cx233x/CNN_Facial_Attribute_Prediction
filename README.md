@@ -2,7 +2,7 @@
 
 **Deep Learning | Computer Vision | CNN | Multi-Task Learning | TensorFlow**
 
-This is an deep learning project that investigates how **Convolutional Neural Networks (CNNs)** can estimate facial attributes from images, comparing single-task and multi-task learning approaches across different training datasets.
+This is a deep learning project that investigates how **Convolutional Neural Networks (CNNs)** can estimate facial attributes from images, comparing single-task and multi-task learning approaches across different training datasets.
 
 **Tech Stack:** Python, TensorFlow/Keras, Scikit-learn, Pandas, NumPy, OpenCV, Matplotlib
 
@@ -298,7 +298,7 @@ python3 --version
 Clone the project using Git:
 
 ```bash
-git clone https://github.com/Cx233x/CNN-Facial-Attribute-Prediction.git
+git clone https://github.com/Cx233x/CNN_Facial_Attribute_Predicion.git
 cd CNN-Facial-Attribute-Prediction
 ```
 

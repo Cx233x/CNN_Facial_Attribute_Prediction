@@ -1,584 +1,179 @@
 # CNN-Based Facial Attribute Prediction
 
-**Deep Learning | Computer Vision | CNN | Multi-Task Learning | TensorFlow**
+**Computer Vision · Deep Learning · Single-Task vs. Multi-Task Learning**
 
-This is a deep learning project that investigates how **Convolutional Neural Networks (CNNs)** can estimate facial attributes from images, comparing single-task and multi-task learning approaches across different training datasets.
+An experimental comparison of convolutional neural networks (CNNs) for predicting three dataset-labeled facial attributes—**age, gender, and ethnicity**—from images. The project evaluates two modeling strategies (independent task-specific CNNs and a shared-backbone multi-task CNN) across two dataset configurations.
 
-**Tech Stack:** Python, TensorFlow/Keras, Scikit-learn, Pandas, NumPy, OpenCV, Matplotlib
+**Tech stack:** Python · TensorFlow / Keras · NumPy · pandas · scikit-learn · OpenCV · Pillow · Matplotlib · Jupyter
 
----
+## Project at a Glance
 
-## 1. Project Overview
+| Prediction task | Model output | Evaluation metric |
+| --- | --- | --- |
+| Age estimation | Estimated age in years | Mean Absolute Error (MAE) ↓ |
+| Gender classification | Binary label defined by the dataset | Accuracy ↑ |
+| Ethnicity classification | One of five dataset-defined categories | Accuracy ↑ |
 
-This project explores whether a computer can learn visual patterns from facial images to predict three attributes:
+**Research questions**
 
-| Prediction Task | Output | Problem Type |
-|---|---|---|
-| Age Prediction | Estimated age in years | Regression |
-| Gender Classification | Male / Female dataset labels | Binary Classification |
-| Ethnicity Classification | White, Black, Asian, Indian, Other dataset labels | Multi-class Classification |
+- How does a **multi-task CNN with shared feature extraction** compare with three independently trained CNNs?
+- How do the recorded results differ when the models are trained using an **original** versus a **combined** facial-image dataset?
+- What trade-offs arise from sharing representations across regression and classification tasks?
 
-These categories reflect the labels provided by the training datasets. They are not definitive descriptions of an individual's identity.
+> **Interpretation note:** The gender and ethnicity categories are annotations supplied by the dataset, not verified or definitive descriptions of a person's identity. This is a research/educational project, not a tool for identifying people or making decisions about them.
 
-### The Main Research Question
+## Experimental Design
 
-**Can one neural network learn multiple related prediction tasks as effectively as separate specialized networks?**
+The project uses a **2 × 2 design**: architecture (single-task or multi-task) × training data (original or combined).
 
-To investigate this, we compare two approaches:
+| Configuration | Approach | Training data | Notebook |
+| --- | --- | --- | --- |
+| 1 | Single-task CNNs | Original | [`02_single_task_original.ipynb`](notebooks/02_single_task_original.ipynb) |
+| 2 | Multi-task CNN | Original | [`03_multi_task_original.ipynb`](notebooks/03_multi_task_original.ipynb) |
+| 3 | Single-task CNNs | Combined | [`04_single_task_combined.ipynb`](notebooks/04_single_task_combined.ipynb) |
+| 4 | Multi-task CNN | Combined | [`05_multi_task_combined.ipynb`](notebooks/05_multi_task_combined.ipynb) |
 
-**Approach A: Single-Task Learning**
+### Model architectures
 
-Build three independent CNN models. Each network specializes in predicting one attribute.
+**Single-task approach:** three separate CNNs are trained for age regression, gender classification, and ethnicity classification. Each task has its own feature extractor and prediction layers.
 
-**Approach B: Multi-Task Learning**
+**Multi-task approach:** one CNN uses shared convolutional feature extraction with three task-specific output heads. The optimization objective combines a regression loss for age and classification losses for the other tasks with task-specific weights.
 
-Build one CNN with a shared feature extraction network and three task-specific output branches.
+Both approaches process images as **48 × 48 grayscale** inputs. The notebooks contain the full architecture definitions, training configurations, regularization choices, and evaluation procedures.
 
-We also investigate whether expanding the training dataset affects model performance.
+## Recorded Results
 
-### Key Research Objectives
+The following numbers are taken from the **saved evaluation outputs** of the two multi-task notebooks. They have **not been independently rerun or verified** as part of this README update.
 
-1. Develop CNN architectures for age regression and facial attribute classification.
-2. Compare single-task and multi-task learning approaches.
-3. Evaluate the effect of combining facial image datasets.
-4. Analyze model performance using task-specific evaluation metrics.
+| Multi-task CNN | Age MAE (years) ↓ | Gender accuracy ↑ | Ethnicity accuracy ↑ |
+| --- | ---: | ---: | ---: |
+| Original dataset | **6.91** | **86.23%** | **73.53%** |
+| Combined dataset | **8.82** | **79.92%** | **65.78%** |
 
----
+Sources: [`03_multi_task_original.ipynb`](notebooks/03_multi_task_original.ipynb) and [`05_multi_task_combined.ipynb`](notebooks/05_multi_task_combined.ipynb).
 
-## 2. How the Models Work
+**Observations:** On the evaluation splits recorded in these notebooks, the original-data multi-task model reports lower age error and higher classification accuracy than the combined-data version. This is an **observed difference between experiment runs**, not evidence on its own that adding data reduces model performance: the datasets and evaluation splits are not established here as a common, untouched benchmark.
 
-A **Convolutional Neural Network (CNN)** is a deep learning model designed to recognize patterns in images.
+The single-task notebooks contain their own training/evaluation cells and prediction examples. Their results are not included in this summary table because a consistent, cross-experiment benchmark has not yet been assembled.
 
-For example, a CNN can learn simple features such as edges and shapes, then combine them into more complex visual representations.
+## Data Preparation
 
-In this project, each input image is converted into a **48 × 48 grayscale image** before being processed by the model.
+The experiments use the **UTKFace** dataset and a tabular representation of facial images and associated labels.
 
-The general pipeline is:
+- **Original data:** `age_gender.csv` (used by the original-data experiments).
+- **Additional image data:** UTKFace `.jpg` files, whose filenames encode age, gender, and ethnicity labels.
+- **Combined data:** `combined_dataset.csv`, produced by converting additional images into a compatible 48 × 48 pixel representation and concatenating them with the original records.
 
-```text
-      Input Facial Image
-              |
-              v
-       Image Preprocessing
-     (48 × 48, Grayscale)
-              |
-              v
-      Convolutional Layers
-       (Feature Learning)
-              |
-              v
-       Prediction Layers
-              |
-              v
-      Predicted Attributes
-```
+The preprocessing workflow is in [`01_data_preprocessing.ipynb`](notebooks/01_data_preprocessing.ipynb), which generates intermediate files such as `utkface_48x48.csv` and `utkface_compact.csv`.
 
-### Architecture A: Single-Task CNN
+Data sources: [UTKFace project page](https://susanqq.github.io/UTKFace/) · [Project dataset folder referenced in the original documentation](https://drive.google.com/drive/folders/1WfbqyYX9-Aa9nAmyQ36obICfAEnrRHrX?usp=drive_link)
 
-In single-task learning, each model focuses on one prediction.
+**Data use:** UTKFace is made available for **non-commercial research purposes**; image rights remain with their original owners. Obtain and use the data in accordance with the source terms. Local datasets and raw images are intentionally excluded from Git tracking.
+
+## Repository Layout
 
 ```text
-                 Input Image
-                      |
-               Preprocessing
-                      |
-         +------------+------------+
-         |            |            |
-         v            v            v
-      Age CNN     Gender CNN   Ethnicity CNN
-         |            |            |
-         v            v            v
-    Age Estimate    Gender      Ethnicity
+CNN_Facial_Attribute_Prediction/
+├── README.md
+├── requirements.txt
+├── .gitignore
+├── notebooks/
+│   ├── 01_data_preprocessing.ipynb
+│   ├── 02_single_task_original.ipynb
+│   ├── 03_multi_task_original.ipynb
+│   ├── 04_single_task_combined.ipynb
+│   └── 05_multi_task_combined.ipynb
+├── models/
+│   ├── single_task/
+│   │   ├── original/          # Age, gender, ethnicity .h5 weights
+│   │   └── combined/          # Age, gender, ethnicity .h5 weights
+│   └── multi_task/
+│       ├── original/          # Full multi-task .h5 model
+│       └── combined/          # Full multi-task .h5 model
+└── assets/
+    └── sample_images/        # Example inputs used in prediction cells
 ```
 
-**Advantages:**
+The notebooks also expect a **local `data/` directory**, which is not committed with the datasets. Some experiment output directories may likewise be created locally rather than appearing in the repository.
 
-- Each model can be optimized for a specific task.
-- Model performance can be evaluated independently.
-- Changes to one model do not directly affect the other models.
+## Getting Started
 
-**Trade-offs:**
-
-- Three separate models must be trained and maintained.
-- The models do not share their learned image features.
-
-### Architecture B: Multi-Task CNN
-
-In multi-task learning, the model shares its convolutional layers across the three prediction tasks.
-
-```text
-                  Input Image
-                       |
-                Preprocessing
-                       |
-                Shared CNN
-             (Feature Extraction)
-                       |
-          +------------+------------+
-          |            |            |
-          v            v            v
-       Age Head    Gender Head  Ethnicity Head
-          |            |            |
-          v            v            v
-     Age Estimate    Gender      Ethnicity
-```
-
-The shared CNN learns image features, while each prediction head specializes in a particular task.
-
-**Advantages:**
-
-- Different tasks can reuse the same learned features.
-- Shared feature extraction may reduce duplicated computation.
-- Related tasks may benefit from learning together.
-
-**Trade-offs:**
-
-- Training requires balancing the objectives of multiple tasks.
-- Improvements in one task may not improve the others.
-- Multi-task learning is not guaranteed to outperform separate models.
-
-### Model Training Techniques
-
-The architectures use several deep learning techniques:
-
-| Technique | Purpose |
-|---|---|
-| Convolutional Layers | Learn visual patterns from images |
-| Max Pooling | Reduce feature map dimensions |
-| Batch Normalization | Help stabilize training |
-| Dropout | Reduce the risk of overfitting |
-| L2 Regularization | Discourage excessively large model weights |
-| Adam Optimizer | Update model parameters during training |
-| Early Stopping | Stop training when validation loss stops improving |
-| ReduceLROnPlateau | Reduce the learning rate when monitored performance plateaus |
-
-The multi-task models also use separate losses for regression and classification, combined into a weighted training objective.
-
----
-
-## 3. Experimental Design
-
-The project compares models across **two dimensions**:
-
-1. **Model Architecture:** Single-task vs. Multi-task CNN
-2. **Training Dataset:** Original Dataset vs. Combined Dataset
-
-This creates four experimental configurations:
-
-| Experiment | Architecture | Training Dataset |
-|---|---|---|
-| Experiment 1 | Single-task CNN | Original dataset |
-| Experiment 2 | Multi-task CNN | Original dataset |
-| Experiment 3 | Single-task CNN | Combined dataset |
-| Experiment 4 | Multi-task CNN | Combined dataset |
-
-### "Combined Dataset"
-
-The original experiments use `age_gender.csv`.
-
-The expanded-data experiments use `combined_dataset.csv`, created by combining:
-
-- `age_gender.csv` — The original facial attribute dataset.
-- `utkface_compact.csv` — Processed facial images from UTKFace, converted into a compatible tabular format.
-
-The data preparation notebook, `dataprocess.ipynb`, performs this process.
-
-```text
-       Original UTKFace Images
-                  |
-                  v
-        Image Preprocessing
-        Resize to 48 × 48
-                  |
-                  v
-        utkface_compact.csv
-                  |
-                  +------------------+
-                  |                  |
-                  v                  v
-           Processed Data       age_gender.csv
-                  |                  |
-                  +---------+--------+
-                            |
-                            v
-                  combined_dataset.csv
-```
-
-The datasets are combined by **adding rows of examples**, rather than adding new image features.
-
-**Why try a combined dataset?**
-
-Increasing the number and variety of training examples may help models learn more generalizable patterns.
-
-However, additional data can also introduce differences in label definitions, sample distributions, or data quality.
-
-Therefore, we evaluate the combined dataset experimentally rather than assuming it produces better results.
-
----
-
-## 4. Technologies Used
-
-| Technology | What It Does |
-|---|---|
-| Python | Main programming language |
-| TensorFlow / Keras | Builds, trains, and evaluates CNN models |
-| NumPy | Performs numerical operations |
-| Pandas | Loads, cleans, and combines datasets |
-| Scikit-learn | Splits data into training and testing sets |
-| OpenCV | Processes and resizes facial images |
-| Pillow | Opens and transforms images |
-| Matplotlib | Visualizes images and model results |
-| Jupyter Notebook | Organizes code, experiments, and results |
-| VS Code | Local development environment |
-
----
-
-## 5. Repository Structure
-
-```text
-CNN-Facial-Attribute-Prediction/
-|
-|-- README.md
-|
-|-- dataprocess.ipynb
-|   # Prepares and combines facial image datasets
-|
-|-- single_predictor/
-|   |-- models.ipynb
-|   |-- age_weights.h5
-|   |-- gender_weights.h5
-|   |-- ethnicity_weights.h5
-|
-|-- Muti-feature/
-|   |-- Multi_Feature_Model.ipynb
-|   |-- multi_feature_model.h5
-|
-|-- single_predictor_with_new_data/
-|   |-- models_new_dataipynb.ipynb
-|   |-- age_weights_2.h5
-|   |-- gender_weights_2.h5
-|   |-- ethnicity_weights_2.h5
-|
-|-- Muti-feature_new_data/
-|   |-- Multi_Feature_Combined_Data.ipynb
-|   |-- multi_feature_model_combined_data.h5
-|
-|-- testimage/
-    |-- testimage1.jpg
-    |-- testimage2.jpg
-    |-- testimage3.jpg
-    |-- testimage4.jpg
-```
-
-### File Extensions
-
-- **`.ipynb`** — A Jupyter Notebook containing executable Python code and its experiment outputs.
-- **`.h5`** — A saved neural network model or a collection of trained model weights.
-- **`.csv`** — A tabular data file, similar to a spreadsheet.
-- **`.jpg`** — An image file.
-- **`.md`** — A Markdown document used for project documentation.
-
----
-## 6. Getting Started
-
-### Step 1: Install Python and VS Code
-
-1. Install [Python](https://www.python.org/downloads/) and [VS Code](https://code.visualstudio.com/).
-2. In VS Code, install the **Python** and **Jupyter** extensions by Microsoft.
-3. Verify your Python installation in Terminal:
+### 1. Clone the repository
 
 ```bash
-python3 --version
+git clone https://github.com/Cx233x/CNN_Facial_Attribute_Prediction.git
+cd CNN_Facial_Attribute_Prediction
 ```
 
-*Windows users can use `py --version` instead.*
-
-### Step 2: Download the Repository
-
-Clone the project using Git:
-
-```bash
-git clone https://github.com/Cx233x/CNN_Facial_Attribute_Predicion.git
-cd CNN-Facial-Attribute-Prediction
-```
-
-Alternatively, click **Code → Download ZIP** on GitHub, extract the files, and open the folder in VS Code.
-
-### Step 3: Set Up the Environment
-
-Create and activate a virtual environment to manage project dependencies.
-
-**macOS / Linux:**
+### 2. Create a Python environment
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate       # macOS / Linux
+python -m pip install -r requirements.txt
 ```
 
-**Windows (PowerShell):**
+On Windows PowerShell, activate with `.venv\Scripts\Activate.ps1` instead. To run notebooks in VS Code, install its **Python** and **Jupyter** extensions and select the virtual environment as your notebook kernel (install `ipykernel` if prompted).
 
-```powershell
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-```
+### 3. Prepare the data directory
 
-Install the required libraries:
+From the repository root:
 
 ```bash
-python -m pip install tensorflow numpy pandas matplotlib scikit-learn pillow opencv-python ipykernel
+mkdir -p data/raw/image
 ```
 
-> **Note:** The pretrained `.h5` files use a legacy Keras format and may require compatibility adjustments with newer TensorFlow versions.
+Place `age_gender.csv` in `data/` for the original-data experiments. For the image-processing workflow, place the permitted UTKFace `.jpg` files in `data/raw/image/` and run `notebooks/01_data_preprocessing.ipynb` to generate the combined CSV. Alternatively, use an already prepared `data/combined_dataset.csv` if you have access to an appropriately licensed copy.
 
-### Step 4: Prepare the Dataset
-
-The project uses two training datasets:
-
-| Dataset | Purpose |
-|---|---|
-| `age_gender.csv` | Original single-task and multi-task experiments |
-| `combined_dataset.csv` | Experiments using the expanded dataset |
-
-Download the datasets from the [Google Drive folder](https://drive.google.com/drive/folders/1WfbqyYX9-Aa9nAmyQ36obICfAEnrRHrX?usp=drive_link).
-
-Place the CSV files in the project's working directory, or organize them under a `data/` folder and update the corresponding paths in the notebooks.
-
-### Step 5: Run the Notebooks
-
-1. Open the project folder in VS Code.
-2. Select the `.ipynb` notebook you want to explore (see [Repository Structure](#5-repository-structure)).
-3. Click **Select Kernel** and choose your `.venv` Python environment.
-4. Run the cells sequentially using **▶ Run Cell**.
-
-The notebooks cover data preprocessing, model training, evaluation, and saving trained models.
-
-> **Note:** Some original notebooks contain environment-specific code and may require minor adjustments before running locally.
-
-### Step 6: Open a Jupyter Notebook
-
-Now you can begin exploring the models.
-
-For your first experiment, open:
+Expected local layout:
 
 ```text
-single_predictor/models.ipynb
+data/
+├── age_gender.csv
+├── combined_dataset.csv        # Generated or obtained separately
+└── raw/
+    └── image/                  # UTKFace images, when preprocessing
 ```
 
-In VS Code:
+### 4. Run the notebooks
 
-1. Locate the file in the Explorer sidebar.
-2. Click the notebook to open it.
-3. Select **Select Kernel** in the upper-right corner.
-4. Choose the Python environment named `.venv`.
-5. Use the **▶ Run Cell** button to execute individual cells.
+Open the repository in VS Code or Jupyter and run the relevant notebook cells in order:
 
-A notebook is made up of cells.
+- `01_data_preprocessing.ipynb` — optional if the combined CSV is already available; required to generate it from raw images.
+- `02_single_task_original.ipynb` and `03_multi_task_original.ipynb` — original dataset experiments.
+- `04_single_task_combined.ipynb` and `05_multi_task_combined.ipynb` — combined dataset experiments.
 
-Each cell contains a small part of the program. You can run them one by one to understand what each step does.
+The four modeling notebooks represent **alternative experiment configurations**, not sequential training stages. Their path setup assumes the working directory is either the repository root or `notebooks/`.
 
-### Step 7: Understand the Training Process
+Model checkpoints are stored under `models/` in the corresponding architecture/dataset subdirectory. The single-task notebooks save **weights**; the multi-task notebooks save **full models**.
 
-The model notebooks follow a general machine learning workflow.
+### 5. Try the saved single-task models
 
-### Part A: Load the Dataset
-
-The notebook reads the CSV data into a Pandas DataFrame.
-
-```python
-df = pd.read_csv("age_gender.csv")
-```
-
-### Part B: Preprocess the Images
-
-Images are converted into numerical arrays.
-
-Each image contains 48 × 48 = **2,304 grayscale pixel values**.
-
-Pixel values are normalized to help the neural network train more consistently.
-
-For example:
-
-```python
-X = X / 255.0
-```
-
-This transforms pixel values from the 0–255 range into the 0–1 range.
-
-### Part C: Split the Dataset
-
-The notebooks use `train_test_split` to divide data into:
-
-- **80% training data** — Used to train the neural network.
-- **20% held-out data** — Used to evaluate predictions during the experiment.
-
-The same held-out split is also supplied as validation data during training in the existing notebooks.
-
-For a more rigorous future evaluation, a separate validation set and untouched final test set would be preferable.
-
-### Part D: Build the CNN
-
-The code defines the layers of the neural network.
-
-For example, a convolutional layer extracts image features:
-
-```python
-Conv2D(
-    filters=32,
-    kernel_size=(3, 3),
-    padding="same"
-)
-```
-
-The network learns increasingly useful visual patterns from the training images.
-
-### Part E: Train the Model
-
-The `.fit()` function trains the network.
-
-For example:
-
-```python
-model.fit(
-    X_train,
-    y_train,
-    epochs=50
-)
-```
-
-This is a simplified illustration; the actual notebooks contain task-specific training calls and additional arguments.
-
-An **epoch** means one complete pass through the training dataset.
-
-The model repeatedly processes examples, measures prediction errors, and adjusts its parameters.
-
-Training can take time depending on the dataset, model complexity, and available hardware.
-
-### Part F: Evaluate the Model
-
-After training, the notebook evaluates the model using the held-out examples.
-
-The main metrics are:
-
-- Age Mean Absolute Error (MAE)
-- Gender Classification Accuracy
-- Ethnicity Classification Accuracy
-
-See the **Model Evaluation** section below for details.
-
-### Part G: Save the Model
-
-The notebooks save trained models or their learned weights as `.h5` files.
-
-These files allow the trained parameters to be reused without repeating the entire training process.
-
----
-
-### Step 8: Try Predictions Using Saved Weights
-
-The `single_predictor/` folder includes three saved weight files:
-
-```text
-age_weights.h5
-gender_weights.h5
-ethnicity_weights.h5
-```
-
-The original notebook contains model-building functions and a prediction helper.
-
-To use these weights:
-
-1. Open `single_predictor/models.ipynb`.
-2. Run the import and model-definition cells.
-3. Load the saved weights into the matching model architectures.
-4. Run the image preprocessing and prediction function cells.
-5. Provide a valid test image path.
-
-**Important:** The original notebook is organized as a training experiment, not as a standalone inference application. Reusing pretrained weights without retraining may require rearranging the notebook cells and making compatibility adjustments.
-
-The project contains example images in:
-
-```text
-testimage/
-```
-
-Once the models and `predict_all()` function have been initialized successfully, the prediction helper can be called as follows:
+The single-task notebooks contain `create_*_model()` functions, weight-loading cells, image preprocessing, and a `predict_all()` helper. After initializing these cells in [`02_single_task_original.ipynb`](notebooks/02_single_task_original.ipynb), an example call is:
 
 ```python
 age, gender, ethnicity = predict_all(
-    "testimage/testimage1.jpg"
+    ASSETS_DIR / "sample_images" / "testimage1.jpg"
 )
-
-print(f"Predicted Age: {age:.1f} years")
-print(f"Predicted Gender: {gender}")
-print(f"Predicted Ethnicity: {ethnicity}")
+print(f"Predicted age: {age:.1f} years")
+print(f"Predicted gender label: {gender}")
+print(f"Predicted ethnicity category: {ethnicity}")
 ```
 
-This example assumes the current working directory is the repository root.
+This example **depends on the notebook's model definitions and loaded weights**; it is not a standalone prediction script. Predictions are model estimates of dataset labels, not verified personal characteristics.
 
-### What Should the Output Look Like?
+## Limitations and Responsible Use
 
-```text
-Predicted Age: <estimated age>
-Predicted Gender: <predicted label>
-Predicted Ethnicity: <predicted dataset category>
-```
+- The evaluation figures above come from stored notebook runs and should not be treated as an external benchmark.
+- The original experimental workflows reuse held-out data for validation during training; a future controlled comparison should use a separate validation set and an untouched common final test set.
+- Dataset composition, labeling practices, and class imbalance may affect reported performance. Differences between the two dataset configurations should not be interpreted causally without additional controls.
+- Face images vary in pose, lighting, occlusion, resolution, and other properties that can affect model predictions.
+- The dataset's binary gender and five-category ethnicity labels are limited proxies and do not capture people's self-identified attributes.
+- No subgroup fairness or external generalization evaluation is claimed here.
+- This project is intended solely for education and research; **do not use these predictions for identification, screening, access control, or other consequential decisions about people**.
 
-The numerical results depend on the input image and trained weights.
+## Acknowledgments
 
-These predictions should not be interpreted as verified personal attributes.
+This work originated as a collaborative final project for **DS340: Machine Learning & AI at Boston University**. The original project repository is [zihaoguo3/DS340-Final-Project](https://github.com/zihaoguo3/DS340-Final-Project).
 
----
-
-## 7. Model Evaluation
-
-### Age Prediction — Mean Absolute Error
-
-Age prediction is a regression task.
-
-The primary metric is **Mean Absolute Error (MAE)**:
-
-**MAE:** `MAE = (1/n) × Σ|Actual Age - Predicted Age|`
-
-### Gender and Ethnicity Classification — Accuracy
-**Accuracy:** `Accuracy = Correct Predictions / Total Predictions`
-
-For example, 80% accuracy means that 80 out of 100 evaluated predictions match their labels.
-
-### Experimental Comparison
-
-The four model configurations can be summarized using:
-
-| Model | Age MAE ↓ | Gender Accuracy ↑ | Ethnicity Accuracy ↑ |
-|---|---|---|---|
-| Single-task CNN — Original Data | Pending verification | Pending verification | Pending verification |
-| Multi-task CNN — Original Data | Pending verification | Pending verification | Pending verification |
-| Single-task CNN — Combined Data | Pending verification | Pending verification | Pending verification |
-| Multi-task CNN — Combined Data | Pending verification | Pending verification | Pending verification |
-
-The repository contains evaluation code and saved experiment outputs. 
-
----
-
-## 8. Limitations and Responsible Use
-
-This project is intended for **educational and experimental purposes**.
-
-Several limitations should be considered:
-
-- Model performance depends on the quality and representativeness of the training data.
-- Dataset-defined ethnicity labels do not establish an individual's actual ethnicity.
-- Binary gender labels do not represent the full range of gender identities.
-- Predictions can be affected by lighting, image quality, pose, and other factors.
-- Differences in dataset composition can make model comparisons difficult.
-- The original notebook environment and saved models have not been fully validated for modern dependency versions.
-- This project should not be used to make consequential decisions about individuals.
-
----
-
-## 9. Acknowledgments
-
-This repository originated as a collaborative final project for **DS340: Machine Learning & AI at Boston University**.
-
-**Original Repository:** [zihaoguo3/DS340-Final-Project](https://github.com/zihaoguo3/DS340-Final-Project)
-
-The project uses facial image datasets for research and learning. All dataset usage, redistribution, and deployment must comply with the applicable licenses and usage conditions.
+Dataset credit: [UTKFace](https://susanqq.github.io/UTKFace/). Please consult the original dataset source for its usage terms and attribution information.

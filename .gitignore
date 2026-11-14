@@ -1,16 +1,23 @@
-# Credentials
-.env
-.env.*
-!.env.example
-
-# Generated files
-logs/
-data/raw/
-
-# Local environment
-.venv/
+# Python
 __pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS / IDE
 .DS_Store
+.vscode/
+
+# Local datasets
+data/*.csv
+data/raw/
+data/processed/
+
+# Temporary logs
+*.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
